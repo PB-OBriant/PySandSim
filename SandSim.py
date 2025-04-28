@@ -1,9 +1,30 @@
 import pygame
 import numpy as np
+import random
+
+# Grid location functions
+def checkbelow(grid, grid_x, grid_y, grid_width, grid_height):
+    """
+    Moves a sand particle based on its current position. The particle 
+    will attempt to move directly down, or randomly to the bottom-left 
+    or bottom-right if the downward path is blocked.
+    """
+    if grid_y + 1 < grid_height:  # Ensure we're not at the bottom edge
+        if grid[grid_x, grid_y + 1] == 0:  # Space directly below is empty
+            # Move down
+            grid[grid_x, grid_y] = 0
+            grid[grid_x, grid_y + 1] = 1
+        else:  # Space below is blocked
+            random_dir = random.choice([-1, 1])  # -1 for left, 1 for right
+            new_x = grid_x + random_dir  # Calculate new x-coordinate
+            if (0 <= new_x < grid_width) and grid[new_x, grid_y + 1] == 0:  # Check bounds and space availability
+                # Move diagonally down-left or down-right
+                grid[grid_x, grid_y] = 0
+                grid[new_x, grid_y + 1] = 1
 
 # Initialize Pygame window
 pygame.init()
-width, height = 800, 600
+width, height = 1400, 900
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 pygame.display.set_caption("Sand Simulation")
@@ -36,15 +57,11 @@ while running:
         if 0 <= grid_x < grid_width and 0 <= grid_y < grid_height:
             grid[grid_x, grid_y] = 1  # Mark grid cell as sand
 
-        # Draw particles in the grid and update their positions
+    # Update particle positions
     for grid_x in range(grid_width):
         for grid_y in range(grid_height - 1, -1, -1):  # Start from the bottom row to avoid overwriting particles
             if grid[grid_x, grid_y] == 1:  # If there's a sand particle
-                # Check if the space below is empty
-                if grid_y + 1 < grid_height and grid[grid_x, grid_y + 1] == 0:
-                    # Move the particle down
-                    grid[grid_x, grid_y] = 0  # Clear the current position
-                    grid[grid_x, grid_y + 1] = 1  # Move to the new position
+                checkbelow(grid, grid_x, grid_y, grid_width, grid_height)
 
     # Draw the updated grid
     for grid_x in range(grid_width):
@@ -52,16 +69,15 @@ while running:
             if grid[grid_x, grid_y] == 1:
                 pygame.draw.rect(
                     screen,
-                    (255, 204, 0),  # Sand particle color
+                    (255, 205, 0),  # Sand particle color
                     (grid_x * cell_size, grid_y * cell_size, cell_size, cell_size)  # Draw sand particle
                 )
             elif grid[grid_x, grid_y] == 0:
                 pygame.draw.rect(
                     screen,
-                    (0,0,0),
-                    (grid_x * cell_size, grid_y * cell_size, cell_size, cell_size)
+                    (0, 0, 0),  # Background color
+                    (grid_x * cell_size, grid_y * cell_size, cell_size, cell_size)  # Clear particle
                 )
-
 
     pygame.display.flip()
     clock.tick(60)
